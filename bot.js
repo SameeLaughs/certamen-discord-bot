@@ -394,6 +394,7 @@ if (cmd === "factit" || msg.channel.name === "factorizing" && !msg.author.bot) {
        }
        else if(['A', 'B', 'C'].includes(teamLetter)) {
          const points = parseFloat(cmd.substring(1));
+         // tried to add name-changing functionality, it did not work
 
 
          if(!isNaN(points)) {
