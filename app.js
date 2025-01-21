@@ -178,11 +178,9 @@ client.on("message", async (msg) => {
           const newUpdate = new Discord.MessageEmbed()
             .setTitle("CertamenBot has just been updated [v2.8.0]")
             .setDescription(
-              "This is an automated message sent upon CertamenBot being updated, and should only be sent once per server. If there is an error, or you would like updates to be posted in a different channel, join the discord at https://discord.gg/PXwXumQ. It is recommended that at least the admin of this server joins the CertamenBot server in order to get more in-depth updates."
             )
             .setColor("#4C047C")
             .setFooter(
-              "Feel free to delete this message if it is in an unconvenient place."
             );
           channel.send(newUpdate);
         });
@@ -193,18 +191,15 @@ client.on("message", async (msg) => {
         .setTitle("Certamenbot v2.9.1")
         .setColor("#4C047C")
         .setDescription(
-          "– Removed changelog section and added log to `!info` \n– Added more buzz variations:\n\t*·buzzah\n\t·bvzz\n\t·pnzz\n\t·zznq*\n– Added to help card:\n\t*·buzzah\n\t·bvzz\n\t·pnzz\n\t·zznq\n\t·buźz\n\t·bazinga*\n– Added validation to score system, which previously would display NaN if a value other than a number was inputted\n– Added a `!clearscores` command and updated `!help`\n– Fixed issue in serverlist command where server owners would be displayed incorrectly\n– Updated status"
         )
         .addFields(
           {
             name: "About",
             value:
-              "CertamenBot is developed by Graydon Schulze-Kalt with the help of Kabir Ramzan.",
           },
           {
             name: "Help",
             value:
-              "Join the CertamenBot server at https://discord.gg/PXwXumQ, and visit the website at https://certamenbot.graydon.sk",
           }
         );
       channel.send(info);
@@ -346,7 +341,6 @@ client.on("message", async (msg) => {
       roles[channelid] = [];
       nummessages[channelid] = 0;
       msg.reply(
-        "CertamenBot is now ready to start the round. You may begin buzzing at any time. To view the settings for the channel, use '!settings'."
       );
       break;
     case "!settings":
