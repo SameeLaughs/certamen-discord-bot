@@ -176,7 +176,7 @@ client.on("message", async (msg) => {
             .filter((chx) => chx.type === "text")
             .find((x) => x.position === 0);
           const newUpdate = new Discord.MessageEmbed()
-            .setTitle("CertamenBot has just been updated [v2.8.0]")
+            .setTitle("CertamenBot has just been updated")
             .setDescription(
             )
             .setColor("#4C047C")
@@ -188,7 +188,6 @@ client.on("message", async (msg) => {
       break;
     case "!info":
       const info = new Discord.MessageEmbed()
-        .setTitle("Certamenbot v2.9.1")
         .setColor("#4C047C")
         .setDescription(
         )
