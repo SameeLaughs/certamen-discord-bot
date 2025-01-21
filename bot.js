@@ -17,8 +17,10 @@ const client = new Client({
 
 const fs = require('fs');
 
-// facts from facts.json
 let facts = [];
+
+let remainingFacts = []; 
+
 try {
   const jsonData = fs.readFileSync('./facts.json', 'utf-8');
   facts = JSON.parse(jsonData);
@@ -26,7 +28,7 @@ try {
   console.error('Error reading or parsing facts.json:', error);
 }
 
-// quotes from quotes.json
+// load quotes from quotes.json
 let quotes = [];
 try {
   const jsonData = fs.readFileSync('./quotes.json', 'utf-8');
@@ -126,7 +128,7 @@ client.on('messageCreate', msg => {
  const cmd = msg.content.toLowerCase();
 
 
-
+// in case someone @s the role instead
  if (msg.mentions.has(client.user) && msg.content.toLowerCase().startsWith('<@&1330019271677575182>')) {
   msg.reply('Maybe read my bio instead of pinging me and waking me up. Smh.');
 }
@@ -137,8 +139,10 @@ if (msg.mentions.has(client.user) && msg.content.toLowerCase().startsWith('<@132
 
 
 if (msg.channel.type === 'DM' && author !== client.user) {
-   if (chan.send) {
-     msg.reply('Maybe take me out to dinner before sliding into my DMs...(You can forward the payment to @sameelaughs)');
+  if (chan.send) {
+    // removed this
+    // doesn't work with current functionality
+    msg.reply('Maybe take me out to dinner before sliding into my DMs...(You can forward the payment to @sameelaughs)');
   } else {
     console.log("Cannot send a message in a partial DM channel.");
   }
@@ -155,15 +159,14 @@ if (msg.channel.type === 'DM' && author !== client.user) {
 
 
    const cmd = msg.content.toLowerCase(), mod = chanData.moderator;
-
- const SAMEELAUGHS_ID = 'REPLACE WITH YOUR ID';
+const SAMEELAUGHS_ID = '931303941998776391';
 
 if (cmd.startsWith('say ')) {
   if (msg.author.id === SAMEELAUGHS_ID) {
-    const messageToSay = msg.content.substring(4).trim(); // Get the text after "say"
+    const messageToSay = msg.content.substring(4).trim(); // text after "say"
     if (messageToSay) {
-      msg.delete();  
-      chan.send(messageToSay);  
+      msg.delete(); 
+      chan.send(messageToSay); 
     } else {
       msg.reply('You need to specify something to say!');
     }
@@ -172,6 +175,7 @@ if (cmd.startsWith('say ')) {
   }
 }
 
+//check if reply
   if (cmd === "quote") {
   if (msg.reference) {
     const repliedMessageId = msg.reference.messageId;
@@ -180,7 +184,7 @@ if (cmd.startsWith('say ')) {
         const quoteContent = repliedMsg.content;
         const quoteAuthor = repliedMsg.author.username;
 
-         quotes.push({ author: quoteAuthor, content: quoteContent });
+        quotes.push({ author: quoteAuthor, content: quoteContent });
         saveQuotesToFile();
 
         msg.reply(`Quote saved: "${quoteContent}" - ${quoteAuthor}`);
@@ -193,36 +197,36 @@ if (cmd.startsWith('say ')) {
     msg.reply("You need to reply to a message to add it to the Dicta Collectanea. If you are trying to pull a quote, say 'quotes'.");
   }
 }
+if (cmd === "factit" || msg.channel.name === "factorizing" && !msg.author.bot) {
+  if (msg.reference) {
+    const repliedMessageId = msg.reference.messageId;
+    chan.messages.fetch(repliedMessageId)
+      .then(repliedMsg => {
+        const factsContent = repliedMsg.content;
+        const factsAuthor = repliedMsg.author.username;
 
-if (cmd === "factit") {
-  if (msg.author.id === SAMEELAUGHS_ID) {
-    if (msg.reference) {
-      const repliedMessageId = msg.reference.messageId;
-      chan.messages.fetch(repliedMessageId)
-        .then(repliedMsg => {
-          const factsContent = repliedMsg.content;
-          const factsAuthor = repliedMsg.author.username;
+        facts.push({ author: factsAuthor, content: factsContent });
+        saveFactsToFile();
 
-           facts.push({ author: factsAuthor, content: factsContent });
-          saveFactsToFile();
-
-          msg.reply(`Fact saved: "${factsContent}"`);
-        })
-        .catch(err => {
-          console.error('Error fetching replied message:', err);
-          chan.send('Failed to fetch the replied message. Make sure it exists.');
-        });
-    } else {
-      msg.reply("You need to reply to a message to add it to the Facts list.");
+        msg.reply(`Fact saved: "${factsContent}"`);
+      })
+      .catch(err => {
+        console.error('Error fetching replied message:', err);
+        chan.send('Failed to fetch the replied message. Make sure it exists.');
+      });
+  } else if (msg.channel.name === "factorizing") {
+    // add messages in 'factorizing' unless they start with 'fact'
+    // removed accsess of common folk to factorizing
+    // run checks in testing 
+    if (!msg.content.toLowerCase().startsWith("fact")) {
+      facts.push({ author: msg.author.username, content: msg.content });
+      saveFactsToFile();
+      msg.reply(`Your message has been factitized! 📚`);
     }
   } else {
-    msg.reply("You do not have permission to use the `factit` command.");
+    msg.reply("You need to reply to a message to add it to the Facts list.");
   }
 }
-
-
-
-
 
   
    switch(cmd) {
@@ -245,17 +249,32 @@ if (cmd === "factit") {
 
 
        case 'fact':
-        if (facts.length > 0) {
-            // fisher-yates
-            const shuffledFacts = [...facts].sort(() => Math.random() - 0.5);
-            const randomFact = shuffledFacts[0]; //   the first element from the shuffled array
-            msg.reply(`📚 Did you know? ${randomFact.content}`);
-        } else {
-            chan.send("Sorry, I couldn't find any facts to share!");
+    if (facts.length > 0) {
+        // refill if empty
+        if (remainingFacts.length === 0) {
+            remainingFacts = [...facts]; // clone it and fisher-yates
+            for (let i = remainingFacts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [remainingFacts[i], remainingFacts[j]] = [remainingFacts[j], remainingFacts[i]];
+            }
         }
-        break;
-          
+        // remaining is shuffled 
+        const randomFact = remainingFacts.shift(); 
 
+        msg.delete()
+            .then(() => {
+                msg.channel.send(`📚 ${msg.author}, Did you know? ${randomFact.content}`);
+            }) // this will let me know if there's an error w/o messing up the fact too much
+            .catch(err => {
+                console.error("Error deleting message:", err);
+                msg.channel.send(`📚 Did you know? ${randomFact.content} - ${msg.author}`);
+            });
+    } else {
+        msg.channel.send(`Sorry, ${msg.author}, I couldn't find any facts to share!`);
+    }
+    break;
+
+    
 
         // QUOTES PULLING
     case 'quotes':
@@ -300,19 +319,19 @@ if (cmd === "factit") {
 
 
 
-       case 'buzz':
+       case buzzterms:
         msg.delete();
         
          if (mod.voice && mod.voice.channel) {
           if (mod.voice.channel.permissionsFor(client.user).has('MUTE_MEMBERS')) {
-            mod.voice.setMute(true)  // Mutes  
+            mod.voice.setMute(true)  // mutes  
               .then(() => {
                 console.log(`${mod.user.tag} has been muted.`);
               })
               .catch(err => {
                 console.error(`Failed to mute ${mod.user.tag}: ${err.message}`);
               });
-          } else {
+          } else { // check
             console.log("Bot does not have permission to mute the moderator.");
           }
         } else {
@@ -323,168 +342,7 @@ if (cmd === "factit") {
         break;
       
         // FOR ALL CASES START
-
-        // 
-        case '🐝':
-        msg.delete();
-        
-         if (mod.voice && mod.voice.channel) {
-          if (mod.voice.channel.permissionsFor(client.user).has('MUTE_MEMBERS')) {
-            mod.voice.setMute(true)  // Mutes  
-              .then(() => {
-                console.log(`${mod.user.tag} has been muted.`);
-              })
-              .catch(err => {
-                console.error(`Failed to mute ${mod.user.tag}: ${err.message}`);
-              });
-          } else {
-            console.log("Bot does not have permission to mute the moderator.");
-          }
-        } else {
-          console.log(`${mod.user.tag} is not in a voice channel.`);
-        }
-      
-        processBuzz(msg, author, chan, chanData);
-        break;
-
-        //CASE 'b'
-        case 'b':
-        msg.delete();
-        
-         if (mod.voice && mod.voice.channel) {
-          if (mod.voice.channel.permissionsFor(client.user).has('MUTE_MEMBERS')) {
-            mod.voice.setMute(true)  // Mutes  
-              .then(() => {
-                console.log(`${mod.user.tag} has been muted.`);
-              })
-              .catch(err => {
-                console.error(`Failed to mute ${mod.user.tag}: ${err.message}`);
-              });
-          } else {
-            console.log("Bot does not have permission to mute the moderator.");
-          }
-        } else {
-          console.log(`${mod.user.tag} is not in a voice channel.`);
-        }
-      
-        processBuzz(msg, author, chan, chanData);
-        break;
-        //CASE buz
-        case 'buz':
-          msg.delete();
-          
-          if (mod.voice && mod.voice.channel) {
-            if (mod.voice.channel.permissionsFor(client.user).has('MUTE_MEMBERS')) {
-              mod.voice.setMute(true)  // Mutes  
-                .then(() => {
-                  console.log(`${mod.user.tag} has been muted.`);
-                })
-                .catch(err => {
-                  console.error(`Failed to mute ${mod.user.tag}: ${err.message}`);
-                });
-            } else {
-              console.log("Bot does not have permission to mute the moderator.");
-            }
-          } else {
-            console.log(`${mod.user.tag} is not in a voice channel.`);
-          }
-
-          processBuzz(msg, author, chan, chanData);
-          break;
-        
-        //case "BU"
-        case 'bu':
-        msg.delete();
-        
-         if (mod.voice && mod.voice.channel) {
-          if (mod.voice.channel.permissionsFor(client.user).has('MUTE_MEMBERS')) {
-            mod.voice.setMute(true)  // Mutes  
-              .then(() => {
-                console.log(`${mod.user.tag} has been muted.`);
-              })
-              .catch(err => {
-                console.error(`Failed to mute ${mod.user.tag}: ${err.message}`);
-              });
-          } else {
-            console.log("Bot does not have permission to mute the moderator.");
-          }
-        } else {
-          console.log(`${mod.user.tag} is not in a voice channel.`);
-        }
-      
-        processBuzz(msg, author, chan, chanData);
-        break;
-                
-        // case bz
-
-        case 'bz':
-        msg.delete();
-        
-         if (mod.voice && mod.voice.channel) {
-          if (mod.voice.channel.permissionsFor(client.user).has('MUTE_MEMBERS')) {
-            mod.voice.setMute(true)  // Mutes  
-              .then(() => {
-                console.log(`${mod.user.tag} has been muted.`);
-              })
-              .catch(err => {
-                console.error(`Failed to mute ${mod.user.tag}: ${err.message}`);
-              });
-          } else {
-            console.log("Bot does not have permission to mute the moderator.");
-          }
-        } else {
-          console.log(`${mod.user.tag} is not in a voice channel.`);
-        }
-      
-        processBuzz(msg, author, chan, chanData);
-        break;
-
-        // case yippie
-        case 'yippie':
-        msg.delete();
-        
-         if (mod.voice && mod.voice.channel) {
-          if (mod.voice.channel.permissionsFor(client.user).has('MUTE_MEMBERS')) {
-            mod.voice.setMute(true)  // Mutes  
-              .then(() => {
-                console.log(`${mod.user.tag} has been muted.`);
-              })
-              .catch(err => {
-                console.error(`Failed to mute ${mod.user.tag}: ${err.message}`);
-              });
-          } else {
-            console.log("Bot does not have permission to mute the moderator.");
-          }
-        } else {
-          console.log(`${mod.user.tag} is not in a voice channel.`);
-        }
-      
-        processBuzz(msg, author, chan, chanData);
-        break;
-
-        case 'zubb':
-          msg.delete();
-          
-           if (mod.voice && mod.voice.channel) {
-            if (mod.voice.channel.permissionsFor(client.user).has('MUTE_MEMBERS')) {
-              mod.voice.setMute(true)  // Mutes  
-                .then(() => {
-                  console.log(`${mod.user.tag} has been muted.`);
-                })
-                .catch(err => {
-                  console.error(`Failed to mute ${mod.user.tag}: ${err.message}`);
-                });
-            } else {
-              console.log("Bot does not have permission to mute the moderator.");
-            }
-          } else {
-            console.log(`${mod.user.tag} is not in a voice channel.`);
-          }
-        
-          processBuzz(msg, author, chan, chanData);
-          break;
-
-          //FINALLY LETS MOVE ON
+          //FINALLY LETS MOVE ON I HATE CS
 
         case 'r':
           msg.delete();   
@@ -492,7 +350,7 @@ if (cmd === "factit") {
           //   moderator is in a voice channel + the bot has permission to unmute?
           if (mod && mod.voice.channel) {
             if (mod.voice.channel.permissionsFor(client.user).has('MUTE_MEMBERS')) {
-              mod.voice.setMute(false)  // Unmutes  
+              mod.voice.setMute(false)  // unmutes  
                 .then(() => {
                   console.log(`${mod.user.tag} has been unmuted.`);
                   chan.send(`${mod && mod.user === author ? 'The moderator' : author} recognized the buzzes.`);
@@ -500,7 +358,7 @@ if (cmd === "factit") {
                 .catch(err => {
                   console.error(`Failed to unmute ${mod.user.tag}: ${err.message}`);
                   chan.send(`Failed to unmute the moderator.`);
-                });
+                }); // other cases
             } else {
               console.log("Bot does not have permission to unmute the moderator.");
               chan.send("I don't have permission to unmute the moderator.");
