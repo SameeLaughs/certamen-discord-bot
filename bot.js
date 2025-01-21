@@ -318,7 +318,8 @@ if (cmd === "factit" || msg.channel.name === "factorizing" && !msg.author.bot) {
               break;
 
 
-
+// why are the above cases slowly slanting to the right 
+       
        case buzzterms:
         msg.delete();
         
@@ -388,7 +389,7 @@ if (cmd === "factit" || msg.channel.name === "factorizing" && !msg.author.bot) {
          if(!isNaN(points)) {
            msg.delete();
            chanData.scores[cmd.charCodeAt(0) - 97] = points;
-           chan.send(`${mod && mod.user === author ? 'The moderator' : author}` +
+           chan.send(`${mod && mod.user === author ? 'The moderator' : author}` + 
                      `  set Team ${teamLetter}'s score to ${points}.`);
          }
        }
@@ -407,7 +408,7 @@ if (cmd === "factit" || msg.channel.name === "factorizing" && !msg.author.bot) {
                        `  subtracted ${-points} points from Team ${teamLetter}'s score.`);
            }
            else {
-             chan.send(`${mod && mod.user === author ? 'The moderator' : author}` +
+             chan.send(`${mod && mod.user === author ? 'The moderator' : author}` + //
                        `  added ${points} points to Team ${teamLetter}'s score.`);
            }
          }
